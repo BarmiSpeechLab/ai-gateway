@@ -1,4 +1,4 @@
-# ai-gateway/app/api/v2/routes.py
+# ai-gateway/app/api/v1/routes.py
 # FASTAPI 라우터 설정
 
 from fastapi import APIRouter
