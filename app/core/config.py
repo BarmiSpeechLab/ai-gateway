@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     RABBITMQ_USER: str  # .env
     RABBITMQ_PASS: str  # .env
     RABBITMQ_VHOST: str = "/barmi"
-    RABBITMQ_QUEUE: str = "ai.jobs"  # Consumer가 수신하는 큐
+    RABBITMQ_JOB_QUEUE: str = "ai.jobs"  # Consumer가 수신하는 큐
     RABBITMQ_RESULT_QUEUE: str = "ai.results"  # Producer가 발행하는 결과 큐
     
     @property

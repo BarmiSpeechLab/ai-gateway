@@ -32,11 +32,11 @@ class FileService:
         path = Path(file_path)
         
         if not path.exists():
-            logger.error(f"❌ 파일을 찾을 수 없음: {file_path}")
+            logger.error(f"파일을 찾을 수 없음: {file_path}")
             raise FileNotFoundError(f"파일이 존재하지 않습니다: {file_path}")
         
         if not path.is_file():
-            logger.error(f"❌ 파일이 아님: {file_path}")
+            logger.error(f"파일이 아님: {file_path}")
             raise IOError(f"유효한 파일이 아닙니다: {file_path}")
         
         try:
@@ -44,11 +44,11 @@ class FileService:
                 data = f.read()
             
             file_size = len(data)
-            logger.info(f"✅ 파일 읽기 성공: {file_path} ({file_size} bytes)")
+            logger.info(f"파일 읽기 성공: {file_path} ({file_size} bytes)")
             return data
         
         except Exception as e:
-            logger.error(f"❌ 파일 읽기 실패: {file_path}, 에러: {e}")
+            logger.error(f"파일 읽기 실패: {file_path}, 에러: {e}")
             raise IOError(f"파일 읽기 실패: {e}")
     
     @staticmethod
@@ -65,16 +65,16 @@ class FileService:
         path = Path(file_path)
         
         if not path.exists():
-            logger.warning(f"⚠️ 삭제할 파일이 없음: {file_path}")
+            logger.warning(f"삭제할 파일이 없음: {file_path}")
             return False
         
         try:
             path.unlink()
-            logger.info(f"🗑️ 파일 삭제 완료: {file_path}")
+            logger.info(f"파일 삭제 완료: {file_path}")
             return True
         
         except Exception as e:
-            logger.error(f"❌ 파일 삭제 실패: {file_path}, 에러: {e}")
+            logger.error(f"파일 삭제 실패: {file_path}, 에러: {e}")
             return False
     
     @staticmethod

@@ -1,27 +1,29 @@
 # ai-gateway
-AI 백엔드(FastAPI) 레포지토리입니다. 
 
-### 🔄 요청 흐름도
-```
-클라이언트 (frontend/backend)
-    ↓
-ai-gateway:8000 (FastAPI)
-    ↓
-[main.py] FastAPI 앱 생성
-    ↓
-[routes.py] 라우팅 처리 (/v1/ai/health 또는 /v1/ai/output)
-    ↓
-[ai_client.py] httpx로 실제 AI 서버에 요청
-    ↓
-AI 서버 (실제 분석 수행)
-    ↓
-[ai_client.py] 응답 받아서 JSON 반환
-    ↓
-[routes.py] 에러 핸들링 후 반환
-    ↓
-클라이언트로 최종 응답
-```
+FastAPI 기반 음성 분석 게이트웨이 서버 - RabbitMQ를 통한 비동기 음성 파일 처리
 
-## ✨ 기술개발문서
-- [FastAPI란 무엇인가요?](https://www.notion.so/FastAPI-2f4fc74069a6806fa07bc9ffe2408998?source=copy_link)
-- [FastAPI AI 서버 통신 설계](https://www.notion.so/FastAPI-AI-2eefc74069a68097a84aff96aeaf7eaa?source=copy_link)
+## 🏗️ 전체 아키텍처
+
+## 📁 디렉토리 구조
+
+```
+ai-gateway/
+├── app/
+│   ├── main.py                # FastAPI 앱 + Main Orchestrator
+│   ├── api/v1/
+│   │   ├── routes.py          # API 라우터 (헬스체크, AI 프록시)
+│   │   ├── health.py          # 헬스체크 엔드포인트
+│   │   └── clients/
+│   │       └── ai_client.py   # AI 서버 HTTP 통신 (파일 읽기 포함)
+│   ├── messaging/
+│   │   ├── rabbitmq.py        # RabbitMQ 연결 관리
+│   │   ├── consumer.py        # 메시지 수신 & Consumer 생명주기
+│   │   ├── producer.py        # 결과 발행
+│   │   └── schemas.py         # 메시지 스키마 정의
+│   ├── services/
+│   │   └── file_service.py    # 파일 I/O (읽기, 삭제, 정보 조회)
+│   └── core/
+│       └── config.py          # 환경설정 관리
+├── Dockerfile
+└── requirements.txt
+```
