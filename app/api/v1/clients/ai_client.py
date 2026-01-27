@@ -83,7 +83,8 @@ async def analyze_audio(file_path: str, target_text: str = "I am a student") -> 
     #     raise
     #  =============================================================
 
-    # 테스트 모드: AI 호출 생략
+    # 테스트 모드: AI 호출 생략 
+    # 비동기 처리 시뮬레이션을 위해 랜덤 대기 후 mock 결과 반환
     # 랜덤 대기(30~60초)로 실제 처리 지연을 흉내냄
     await asyncio.sleep(random.uniform(30, 60))
     return {
