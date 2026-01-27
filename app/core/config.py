@@ -10,6 +10,15 @@ class Settings(BaseSettings):
 
     WORKER_URLS: str = "" # 콤마로 구분된 워커 URL 목록
     
+    # RabbitMQ 설정
+    RABBITMQ_HOST: str  # .env
+    RABBITMQ_PORT: int = 5672
+    RABBITMQ_USER: str  # .env
+    RABBITMQ_PASS: str  # .env
+    RABBITMQ_VHOST: str = "/barmi"
+    RABBITMQ_QUEUE: str = "ai.jobs"  # Consumer가 수신하는 큐
+    RABBITMQ_RESULT_QUEUE: str = "ai.results"  # Producer가 발행하는 결과 큐
+    
     @property
     def worker_urls_list(self) -> list[str]:
         return _parse_urls(self.WORKER_URLS)
