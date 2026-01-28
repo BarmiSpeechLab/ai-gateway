@@ -21,7 +21,7 @@ producer: AudioResultProducer = None
 file_service: FileService = None
 
 
-async def process_audio_job(file_path: str):
+async def process_audio_job(file_path: str, target_text: str = "I am a student"):
     """
     음성 파일 처리 orchestration 함수
     
@@ -31,15 +31,25 @@ async def process_audio_job(file_path: str):
     try:
         logger.info(f"파일 처리 시작: {file_path}")
         
-        # 1. AI 서버로 분석 요청 (파일 읽기 포함)
-        result = await ai_client.analyze_audio(file_path)
-        
-        # 2. 결과 발행
-        producer.publish(
-            file_path=file_path,
-            success=True,
-            result=result
-        )
+        # 1. AI 서버로 분석 요청 및 결과 수신
+        async for result in ai_client.analyze_audio(file_path, target_text):
+            result_type = result.get("type")
+
+            if result_type == "error":
+                logger.error(f"AI 서버 에러: {result}")
+                producer.publish(
+                    result_type="error",
+                    file_path=file_path,
+                    data=result
+                )
+                continue
+
+            if result_type:
+                producer.publish(
+                    result_type=result_type,
+                    file_path=file_path,
+                    data=result
+                )
         
         # 3. 파일 삭제
         deleted = file_service.delete_file(file_path)
@@ -55,55 +65,15 @@ async def process_audio_job(file_path: str):
         
         # 실패 결과 발행
         producer.publish(
+            result_type="error",
             file_path=file_path,
-            success=False,
-            error=str(e)
+            data={"error": str(e)}
         )
 
 consumer: AudioJobConsumer = None
 consumer_thread: threading.Thread = None
 producer: AudioResultProducer = None
 file_service: FileService = None
-
-
-async def process_audio_job(file_path: str):
-    """
-    음성 파일 처리 orchestration 함수
-    
-    Args:
-        file_path: 처리할 파일 경로
-    """
-    try:
-        logger.info(f"파일 처리 시작: {file_path}")
-        
-        # 1. AI 서버로 분석 요청 (파일 읽기 포함)
-        result = await ai_client.analyze_audio(file_path)
-        
-        # 2. 결과 발행
-        producer.publish(
-            file_path=file_path,
-            success=True,
-            result=result
-        )
-        
-        # 3. 파일 삭제
-        deleted = file_service.delete_file(file_path)
-        if deleted:
-            logger.info(f"파일 삭제 완료: {file_path}")
-        else:
-            logger.warning(f"파일 삭제 실패: {file_path}")
-        
-        logger.info(f"파일 처리 완료: {file_path}")
-        
-    except Exception as e:
-        logger.error(f"파일 처리 실패: {file_path}, error: {e}")
-        
-        # 실패 결과 발행
-        producer.publish(
-            file_path=file_path,
-            success=False,
-            error=str(e)
-        )
 
 
 @asynccontextmanager
