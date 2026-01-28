@@ -34,9 +34,9 @@ class RabbitMQConnection:
             )
             self.connection = pika.BlockingConnection(parameters)
             self.channel = self.connection.channel()
-            logger.info(f"✅ RabbitMQ 연결 성공: {self.host}:{self.port}")
+            logger.info(f"RabbitMQ 연결 성공: {self.host}:{self.port}")
         except Exception as e:
-            logger.error(f"❌ RabbitMQ 연결 실패: {e}")
+            logger.error(f"RabbitMQ 연결 실패: {e}")
             raise
     
     def close(self):
