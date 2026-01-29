@@ -21,7 +21,7 @@ producer: AudioResultProducer = None
 file_service: FileService = None
 
 
-async def process_audio_job(file_path: str, target_text: str = "I am a student"):
+async def process_audio_job(file_path: str):
     """
     음성 파일 처리 orchestration 함수
     
@@ -32,22 +32,12 @@ async def process_audio_job(file_path: str, target_text: str = "I am a student")
         logger.info(f"파일 처리 시작: {file_path}")
         
         # 1. AI 서버로 분석 요청 및 결과 수신
-        async for result in ai_client.analyze_audio(file_path, target_text):
+        async for result in ai_client.analyze_audio(file_path):
             result_type = result.get("type")
-
-            if result_type == "error":
-                logger.error(f"AI 서버 에러: {result}")
-                producer.publish(
-                    result_type="error",
-                    file_path=file_path,
-                    data=result
-                )
-                continue
 
             if result_type:
                 producer.publish(
                     result_type=result_type,
-                    file_path=file_path,
                     data=result
                 )
         
@@ -66,8 +56,7 @@ async def process_audio_job(file_path: str, target_text: str = "I am a student")
         # 실패 결과 발행
         producer.publish(
             result_type="error",
-            file_path=file_path,
-            data={"error": str(e)}
+            data={"error": str(e), "file_path": file_path}
         )
 
 consumer: AudioJobConsumer = None

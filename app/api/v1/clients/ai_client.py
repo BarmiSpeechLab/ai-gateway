@@ -19,7 +19,7 @@ async def ai_healthcheck():
 
 
 # AI 서버 음성 파일 분석 함수
-async def analyze_audio(file_path: str, target_text: str) -> dict:
+async def analyze_audio(file_path: str) -> dict:
     """
     음성 파일을 AI 서버로 전송하여 분석
     스트리밍 방식 - AI 서버 결과를 한 줄씩 yield
@@ -39,10 +39,7 @@ async def analyze_audio(file_path: str, target_text: str) -> dict:
         
         # 2. AI 서버에 전송
         files = {
-            "file": (file_path.split("/")[-1], audio_data, "audio/wav")
-        }
-        data = {
-            "target_text": target_text
+            "file": ("audio.wav", audio_data, "audio/wav")
         }
         
         logger.info(f"AI 서버 요청 시작: {file_path}")
@@ -50,9 +47,7 @@ async def analyze_audio(file_path: str, target_text: str) -> dict:
         async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(
                 f"{settings.AI_BASE_URL}/analyze",
-                files=files,
-                data=data,
-                stream=True # 스트리밍 처리
+                files=files
             )
             response.raise_for_status()
 
