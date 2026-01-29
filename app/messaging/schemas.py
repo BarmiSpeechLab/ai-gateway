@@ -8,14 +8,15 @@ class AudioJobMessage(BaseModel):
     """
     Backend에서 RabbitMQ를 통해 전달되는 음성 파일 처리 작업 메시지
     """
-    filePath: str = Field(..., description="공유 볼륨의 음성 파일 경로")
+    file_path: str = Field(..., description="공유 볼륨의 음성 파일 경로", alias="filePath")
     
     class Config:
         json_schema_extra = {
             "example": {
-                "filePath": "/shared/audio/sample.wav"
+                "file_path": "/shared/audio/sample.wav"
             }
         }
+        populate_by_name = True  # 둘 다 받기 (filePath, file_path)
 
 class AudioResultMessage(BaseModel):
     """

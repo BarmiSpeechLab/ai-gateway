@@ -65,13 +65,13 @@ class AudioJobConsumer:
             # 1. 메시지 파싱
             message_dict = json.loads(body)
             message = AudioJobMessage(**message_dict)
-            logger.info(f"메시지 수신: {message.filePath}")
+            logger.info(f"메시지 수신: {message.file_path}")
             
             # 2. 백그라운드 스레드에서 처리 시작
             if self.process_callback:
                 threading.Thread(
                     target=self._process_in_thread,
-                    args=(message.filePath,),
+                    args=(message.file_path,),
                     daemon=True
                 ).start()
             else:
@@ -81,7 +81,7 @@ class AudioJobConsumer:
             
             # 3. 즉시 ACK (처리를 기다리지 않음)
             channel.basic_ack(delivery_tag=method.delivery_tag)
-            logger.info(f"메시지 수신 완료: {message.filePath}")
+            logger.info(f"메시지 수신 완료: {message.file_path}")
             
         except json.JSONDecodeError as e:
             logger.error(f"JSON 파싱 에러: {e}")
