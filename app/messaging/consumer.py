@@ -65,13 +65,14 @@ class AudioJobConsumer:
             # 1. 메시지 파싱
             message_dict = json.loads(body)
             message = AudioJobMessage(**message_dict)
-            logger.info(f"메시지 수신: {message.file_path}")
+            file_path = message.audioInfo["filePath"]
+            logger.info(f"메시지 수신: {file_path}")
             
             # 2. 백그라운드 스레드에서 처리 시작
             if self.process_callback:
                 threading.Thread(
                     target=self._process_in_thread,
-                    args=(message.file_path,),
+                    args=(file_path, message.taskId, message.scriptInfo),
                     daemon=True
                 ).start()
             else:
@@ -81,7 +82,7 @@ class AudioJobConsumer:
             
             # 3. 즉시 ACK (처리를 기다리지 않음)
             channel.basic_ack(delivery_tag=method.delivery_tag)
-            logger.info(f"메시지 수신 완료: {message.file_path}")
+            logger.info(f"메시지 수신 완료: {file_path}")
             
         except json.JSONDecodeError as e:
             logger.error(f"JSON 파싱 에러: {e}")
@@ -90,14 +91,14 @@ class AudioJobConsumer:
             logger.error(f"메시지 처리 에러: {e}")
             channel.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
     
-    def _process_in_thread(self, file_path: str):
+    def _process_in_thread(self, file_path: str, task_id: str, script_info: dict):
         """
         스레드에서 실행되는 비동기 처리
         """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            loop.run_until_complete(self.process_callback(file_path))
+            loop.run_until_complete(self.process_callback(file_path, task_id, script_info))
         finally:
             loop.close()
     

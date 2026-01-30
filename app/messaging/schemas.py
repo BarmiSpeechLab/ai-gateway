@@ -1,22 +1,26 @@
 # ai-gateway/app/messaging/schemas.py
 # RabbitMQ 메시지 스키마 정의 (파싱 및 검증)
 
-from typing import Optional, Any
+from typing import Optional, Any, List, Dict
 from pydantic import BaseModel, Field
 
 class AudioJobMessage(BaseModel):
     """
     Backend에서 RabbitMQ를 통해 전달되는 음성 파일 처리 작업 메시지
     """
-    file_path: str = Field(..., description="공유 볼륨의 음성 파일 경로", alias="filePath")
-    
+    taskId: str = Field(..., alias="task_id")
+    audioInfo: Dict[str, str] = Field(..., alias="audio_info")
+    scriptInfo: Dict[str, Any] = Field(..., alias="script_info")
     class Config:
+        populate_by_name = True  # camelCase/snake_case 모두 허용
+
         json_schema_extra = {
             "example": {
-                "file_path": "/shared/audio/sample.wav"
+                "taskId": "req_550e8400-e29b",
+                "audioInfo": {"filePath": "/shared/audio/sample.wav"},
+                "scriptInfo": {"fullText": "I like to dance"}
             }
         }
-        populate_by_name = True  # 둘 다 받기 (filePath, file_path)
 
 class AudioResultMessage(BaseModel):
     """
