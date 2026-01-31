@@ -61,18 +61,20 @@ class AudioJobConsumer:
         메시지 수신 시 호출되는 콜백 함수
         백그라운드 스레드에서 비동기 처리 시작 후 즉시 ACK
         """
+        task_id = None
         try:
             # 1. 메시지 파싱
             message_dict = json.loads(body)
+            task_id = message_dict.get("taskId") or message_dict.get("task_id")
             message = AudioJobMessage(**message_dict)
-            file_path = message.audioInfo["filePath"]
+            file_path = message.filePath
             logger.info(f"메시지 수신: {file_path}")
             
             # 2. 백그라운드 스레드에서 처리 시작
             if self.process_callback:
                 threading.Thread(
                     target=self._process_in_thread,
-                    args=(file_path, message.taskId, message.scriptInfo),
+                    args=(file_path, message.taskId, message.analysisRequest),
                     daemon=True
                 ).start()
             else:
@@ -87,20 +89,47 @@ class AudioJobConsumer:
         except json.JSONDecodeError as e:
             logger.error(f"JSON 파싱 에러: {e}")
             channel.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+            # taskId 추출 실패 시 에러 발행 불가
+            if task_id:
+                self._publish_parse_error(task_id, str(e))
         except Exception as e:
             logger.error(f"메시지 처리 에러: {e}")
             channel.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
+            # Pydantic 검증 실패 등의 경우에도 에러 발행 시도
+            if task_id:
+                self._publish_parse_error(task_id, str(e))
     
-    def _process_in_thread(self, file_path: str, task_id: str, script_info: dict):
+    def _process_in_thread(self, file_path: str, task_id: str, analysis_request: dict):
         """
         스레드에서 실행되는 비동기 처리
         """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            loop.run_until_complete(self.process_callback(file_path, task_id, script_info))
+            loop.run_until_complete(self.process_callback(file_path, task_id, analysis_request))
         finally:
             loop.close()
+    
+    def _publish_parse_error(self, task_id: str, error_msg: str):
+        """
+        메시지 파싱 에러를 모든 타입 큐로 발행
+        """
+        from app.messaging.producer import AudioResultProducer
+        
+        error_message = {
+            "taskId": task_id,
+            "status": "FAIL",
+            "error": f"MESSAGE_PARSE_ERROR: {error_msg}",
+            "analysisResult": None
+        }
+        
+        try:
+            producer = AudioResultProducer()
+            for result_type in ["pron", "inton", "llm"]:
+                producer.publish(result_type=result_type, data=error_message)
+            producer.close()
+        except Exception as e:
+            logger.error(f"파싱 에러 발행 실패: {e}")
     
     def stop(self):
         """

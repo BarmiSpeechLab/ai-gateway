@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     AI_BASE_URL: str = "http://localhost:5000" # AI 서버 기본 URL
+    TEST_AI_URL: str = "http://localhost:5001" # Mock AI 서버 테스트 URL
     AI_TIMEOUT_SEC: int = 100 # AI 서버 요청 타임아웃 (초)
 
     WORKER_URLS: str = "" # 콤마로 구분된 워커 URL 목록
