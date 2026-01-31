@@ -38,20 +38,12 @@ async def process_audio_job(file_path: str, task_id: str, analysis_request: dict
             result_type = result.get("type")
 
             if result_type:
-                # type="error"면 모든 큐로 발행
-                if result_type == "error":
-                    for queue_type in ["pron", "inton", "llm"]:
-                        producer.publish(
-                            result_type=queue_type,
-                            data=result
-                        )
-                else:
-                    # type이 명확하면 해당 큐로만 발행
-                    producer.publish(
-                        result_type=result_type,
-                        data=result
-                    )
-        
+                producer.publish(
+                    result_type=result_type,
+                    data=result
+                )
+            else:
+                logger.warning(f"결과 타입 누락: {result}")
         # 3. 파일 삭제
         deleted = file_service.delete_file(file_path)
         if deleted:

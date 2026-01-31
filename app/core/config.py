@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     RABBITMQ_PRON_QUEUE: str = "pron_result"
     RABBITMQ_INTON_QUEUE: str = "inton_result"
     RABBITMQ_LLM_QUEUE: str = "llm_result"
+    RABBITMQ_ERROR_QUEUE: str = "error_result"
     
     @property
     def worker_urls_list(self) -> list[str]:

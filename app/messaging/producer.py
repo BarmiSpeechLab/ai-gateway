@@ -38,7 +38,7 @@ class AudioResultProducer:
         Type별로 다른 큐에 발행
         
         Args:
-            result_type: 결과 타입 (pron, inton, llm)
+            result_type: 결과 타입 (pron, inton, llm, error)
             data: AI 분석 결과 데이터
         """
         # type별 큐 매핑 (환경변수 사용)
@@ -46,6 +46,7 @@ class AudioResultProducer:
             "pron": settings.RABBITMQ_PRON_QUEUE,
             "inton": settings.RABBITMQ_INTON_QUEUE,
             "llm": settings.RABBITMQ_LLM_QUEUE,
+            "error": settings.RABBITMQ_ERROR_QUEUE
         }
         
         queue_name = queue_map.get(result_type, f"{result_type}_result")
