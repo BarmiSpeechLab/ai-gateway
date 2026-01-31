@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     AI_BASE_URL: str = "http://localhost:5000" # AI 서버 기본 URL
+    TEST_AI_URL: str = "http://localhost:5001" # Mock AI 서버 테스트 URL
     AI_TIMEOUT_SEC: int = 100 # AI 서버 요청 타임아웃 (초)
 
     WORKER_URLS: str = "" # 콤마로 구분된 워커 URL 목록
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
     RABBITMQ_PRON_QUEUE: str = "pron_result"
     RABBITMQ_INTON_QUEUE: str = "inton_result"
     RABBITMQ_LLM_QUEUE: str = "llm_result"
+    RABBITMQ_ERROR_QUEUE: str = "error_result"
     
     @property
     def worker_urls_list(self) -> list[str]:

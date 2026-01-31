@@ -21,18 +21,20 @@ producer: AudioResultProducer = None
 file_service: FileService = None
 
 
-async def process_audio_job(file_path: str):
+async def process_audio_job(file_path: str, task_id: str, analysis_request: dict):
     """
     음성 파일 처리 orchestration 함수
     
     Args:
         file_path: 처리할 파일 경로
+        task_id: 작업 ID
+        analysis_request: 분석 요청 데이터
     """
     try:
         logger.info(f"파일 처리 시작: {file_path}")
         
         # 1. AI 서버로 분석 요청 및 결과 수신
-        async for result in ai_client.analyze_audio(file_path):
+        async for result in ai_client.analyze_audio(file_path, task_id, analysis_request):
             result_type = result.get("type")
 
             if result_type:
@@ -40,7 +42,8 @@ async def process_audio_job(file_path: str):
                     result_type=result_type,
                     data=result
                 )
-        
+            else:
+                logger.warning(f"결과 타입 누락: {result}")
         # 3. 파일 삭제
         deleted = file_service.delete_file(file_path)
         if deleted:
@@ -53,16 +56,21 @@ async def process_audio_job(file_path: str):
     except Exception as e:
         logger.error(f"파일 처리 실패: {file_path}, error: {e}")
         
-        # 실패 결과 발행
-        producer.publish(
-            result_type="error",
-            data={"error": str(e), "file_path": file_path}
-        )
-
-consumer: AudioJobConsumer = None
-consumer_thread: threading.Thread = None
-producer: AudioResultProducer = None
-file_service: FileService = None
+        # error 큐로 FAIL 메시지 발행
+        error_message = {
+            "taskId": task_id,
+            "status": "FAIL",
+            "error": str(e),
+            "analysisResult": None
+        }
+        
+        try:
+            producer.publish(
+                result_type="error",
+                data=error_message
+            )
+        except Exception as pub_error:
+            logger.error(f"에러 메시지 발행 실패: {pub_error}")
 
 
 @asynccontextmanager

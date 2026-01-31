@@ -35,17 +35,18 @@ class AudioResultProducer:
     
     def publish(self, result_type: str, data: dict):
         """
-        Type별로 다른 큐에 발행 (스트리밍 결과용)
+        Type별로 다른 큐에 발행
         
         Args:
-            result_type: 결과 타입 (pron, inton, feedback, llm)
+            result_type: 결과 타입 (pron, inton, llm, error)
             data: AI 분석 결과 데이터
         """
-        # type별 큐 매핑
+        # type별 큐 매핑 (환경변수 사용)
         queue_map = {
-            "pron": "pron_result",
-            "inton": "inton_result",
-            "llm": "llm_result",
+            "pron": settings.RABBITMQ_PRON_QUEUE,
+            "inton": settings.RABBITMQ_INTON_QUEUE,
+            "llm": settings.RABBITMQ_LLM_QUEUE,
+            "error": settings.RABBITMQ_ERROR_QUEUE
         }
         
         queue_name = queue_map.get(result_type, f"{result_type}_result")
@@ -53,12 +54,12 @@ class AudioResultProducer:
         try:
             self.connect()
             
-            message = {
-                "type": result_type,
-                "data": data
-            }
-            
-            message_body = json.dumps(message, ensure_ascii=False)
+            if isinstance(data, dict) and "type" in data:
+                payload = {k: v for k, v in data.items() if k != "type"}
+            else:
+                payload = data
+
+            message_body = json.dumps(payload, ensure_ascii=False)
             
             self.rabbitmq.channel.basic_publish(
                 exchange='',

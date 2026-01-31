@@ -19,14 +19,15 @@ async def ai_healthcheck():
 
 
 # AI 서버 음성 파일 분석 함수
-async def analyze_audio(file_path: str) -> dict:
+async def analyze_audio(file_path: str, task_id: str, analysis_request: dict):
     """
     음성 파일을 AI 서버로 전송하여 분석
     스트리밍 방식 - AI 서버 결과를 한 줄씩 yield
     
     Args:
         file_path: 분석할 음성 파일 경로 (/shared/audio/xxx.wav)
-        target_text: 정답 문장
+        task_id: 작업 ID
+        analysis_request: 분석 요청 데이터 (dict)
     
     Returns:
         AI 서버 분석 결과 (score, feedback, etc.)
@@ -41,21 +42,35 @@ async def analyze_audio(file_path: str) -> dict:
         files = {
             "file": ("audio.wav", audio_data, "audio/wav")
         }
+        data = {
+            "taskId": task_id,
+            "analysisRequest": json.dumps(analysis_request, ensure_ascii=False)
+        }
         
-        logger.info(f"AI 서버 요청 시작: {file_path}")
+        # 테스트용 Mock AI 서버 사용
+        ai_url = settings.AI_BASE_URL  # 실제 AI 서버
+        # ai_url = settings.TEST_AI_URL  # Mock AI 서버 테스트
+        
+        logger.info(f"AI 서버 요청 시작: {ai_url}/analyze, taskId={task_id}")
         
         async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(
-                f"{settings.AI_BASE_URL}/analyze",
-                files=files
+                f"{ai_url}/analyze",
+                files=files,
+                data=data
             )
             response.raise_for_status()
 
             async for line in response.aiter_lines():
                 if line:
-                    data = json.loads(line)
-                    # type별로 분기해서 yield
-                    yield data
+                    try:
+                        data = json.loads(line)
+                        # type별로 분기해서 yield
+                        yield data
+                    except json.JSONDecodeError as e:
+                        logger.error(f"AI 응답 JSON 파싱 실패: {line[:100]}, error: {e}")
+                        # 파싱 실패한 라인은 건너뛰고 계속 처리
+                        continue
                     
         logger.info(f"AI 서버 요청 완료: {file_path}")
 
