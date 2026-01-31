@@ -56,7 +56,7 @@ async def process_audio_job(file_path: str, task_id: str, analysis_request: dict
     except Exception as e:
         logger.error(f"파일 처리 실패: {file_path}, error: {e}")
         
-        # 모든 타입 큐로 FAIL 메시지 발행
+        # error 큐로 FAIL 메시지 발행
         error_message = {
             "taskId": task_id,
             "status": "FAIL",
@@ -64,14 +64,13 @@ async def process_audio_job(file_path: str, task_id: str, analysis_request: dict
             "analysisResult": None
         }
         
-        for result_type in ["pron", "inton", "llm"]:
-            try:
-                producer.publish(
-                    result_type=result_type,
-                    data=error_message
-                )
-            except Exception as pub_error:
-                logger.error(f"에러 메시지 발행 실패 ({result_type}): {pub_error}")
+        try:
+            producer.publish(
+                result_type="error",
+                data=error_message
+            )
+        except Exception as pub_error:
+            logger.error(f"에러 메시지 발행 실패: {pub_error}")
 
 
 @asynccontextmanager

@@ -112,7 +112,7 @@ class AudioJobConsumer:
     
     def _publish_parse_error(self, task_id: str, error_msg: str):
         """
-        메시지 파싱 에러를 모든 타입 큐로 발행
+        메시지 파싱 에러를 error 큐로 발행
         """
         from app.messaging.producer import AudioResultProducer
         
@@ -125,8 +125,7 @@ class AudioJobConsumer:
         
         try:
             producer = AudioResultProducer()
-            for result_type in ["pron", "inton", "llm"]:
-                producer.publish(result_type=result_type, data=error_message)
+            producer.publish(result_type="error", data=error_message)
             producer.close()
         except Exception as e:
             logger.error(f"파싱 에러 발행 실패: {e}")
