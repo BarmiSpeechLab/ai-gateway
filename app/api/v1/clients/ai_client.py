@@ -19,7 +19,7 @@ async def ai_healthcheck():
 
 
 # AI 서버 음성 파일 분석 함수
-async def analyze_audio(file_path: str, task_id: str, analysis_request: dict):
+async def analyze_audio(file_path: str, task_id: str, analysis_type: str, analysis_request: dict):
     """
     음성 파일을 AI 서버로 전송하여 분석
     스트리밍 방식 - AI 서버 결과를 한 줄씩 yield
@@ -44,6 +44,7 @@ async def analyze_audio(file_path: str, task_id: str, analysis_request: dict):
         }
         data = {
             "taskId": task_id,
+            "type": analysis_type,
             "analysisRequest": json.dumps(analysis_request, ensure_ascii=False)
         }
         
@@ -87,7 +88,7 @@ async def analyze_audio(file_path: str, task_id: str, analysis_request: dict):
 
 
 # AI 서버 대화 분석 함수
-async def conversation_audio(file_path: str, task_id: str, analysis_request: dict):
+async def conversation_audio(file_path: str, task_id: str, analysis_type: str, analysis_request: dict):
     """
     음성 파일을 AI 서버로 전송하여 분석
     한 번에 전체 결과 반환
@@ -112,6 +113,7 @@ async def conversation_audio(file_path: str, task_id: str, analysis_request: dic
         }
         data = {
             "taskId": task_id,
+            "type": analysis_type,
             "analysisRequest": json.dumps(analysis_request, ensure_ascii=False)
         }
         

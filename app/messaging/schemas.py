@@ -10,6 +10,7 @@ class AudioJobMessage(BaseModel):
     """
     taskId: str = Field(..., alias="task_id")
     filePath: str = Field(..., alias="file_path")
+    type: str = Field(..., description="ipa, conversation 등")
     analysisRequest: Dict[str, Any] = Field(..., alias="analysis_request")
 
     class Config:
@@ -19,6 +20,7 @@ class AudioJobMessage(BaseModel):
             "example": {
                 "taskId": "req_550e8400-e29b",
                 "filePath": "/shared/audio/sample.wav",
+                "type": "ipa",
                 "analysisRequest": {
                     "fullText": "I like to dance",
                     "wordDetails": []

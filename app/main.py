@@ -25,7 +25,7 @@ producer: AudioResultProducer = None
 file_service: FileService = None
 
 
-async def process_audio_job(file_path: str, task_id: str, analysis_request: dict):
+async def process_audio_job(file_path: str, task_id: str, analysis_type: str, analysis_request: dict):
     """
     음성 파일 처리 orchestration 함수
     
@@ -38,7 +38,7 @@ async def process_audio_job(file_path: str, task_id: str, analysis_request: dict
         logger.info(f"파일 처리 시작: {file_path}")
         
         # 1. AI 서버로 분석 요청 및 결과 수신
-        async for result in ai_client.analyze_audio(file_path, task_id, analysis_request):
+        async for result in ai_client.analyze_audio(file_path, task_id, analysis_type, analysis_request):
             result_type = result.get("type")
 
             if result_type:
@@ -77,7 +77,7 @@ async def process_audio_job(file_path: str, task_id: str, analysis_request: dict
             logger.error(f"에러 메시지 발행 실패: {pub_error}")
 
 # 회화 기능
-async def process_conversation_job(file_path: str, task_id: str, analysis_request: dict):
+async def process_conversation_job(file_path: str, task_id: str, analysis_type: str, analysis_request: dict):
     """
     대화 파일 처리 orchestration 함수
     
@@ -90,7 +90,7 @@ async def process_conversation_job(file_path: str, task_id: str, analysis_reques
         logger.info(f"파일 처리 시작: {file_path}")
         
         # 1. AI 서버로 분석 요청 및 결과 수신
-        result = await ai_client.conversation_audio(file_path, task_id, analysis_request)
+        result = await ai_client.conversation_audio(file_path, task_id, analysis_type, analysis_request)
 
         if result:
             producer.publish(
