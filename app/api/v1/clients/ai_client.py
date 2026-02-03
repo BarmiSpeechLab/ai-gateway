@@ -47,9 +47,7 @@ async def analyze_audio(file_path: str, task_id: str, analysis_request: dict):
             "analysisRequest": json.dumps(analysis_request, ensure_ascii=False)
         }
         
-        # 테스트용 Mock AI 서버 사용
         ai_url = settings.AI_BASE_URL  # 실제 AI 서버
-        # ai_url = settings.TEST_AI_URL  # Mock AI 서버 테스트
         
         logger.info(f"AI 서버 요청 시작: {ai_url}/analyze, taskId={task_id}")
         
@@ -85,4 +83,63 @@ async def analyze_audio(file_path: str, task_id: str, analysis_request: dict):
         raise Exception(f"AI 서버 에러: {e.response.status_code}")
     except Exception as e:
         logger.error(f"AI 서버 통신 실패: {file_path}, error: {e}")
+        raise
+
+
+# AI 서버 대화 분석 함수
+async def conversation_audio(file_path: str, task_id: str, analysis_request: dict):
+    """
+    음성 파일을 AI 서버로 전송하여 분석
+    한 번에 전체 결과 반환
+    
+    Args:
+        file_path: 분석할 음성 파일 경로 (/shared/audio/xxx.wav)
+        task_id: 작업 ID
+        analysis_request: 분석 요청 데이터 (dict)
+    
+    Returns:
+        AI 서버 분석 결과 (dict)
+    """
+    try:
+        # 1. 파일 읽기
+        logger.info(f"대화 파일 읽기 시작: {file_path}")
+        audio_data = file_service.read_file(file_path) # bytes로 변환
+        logger.debug(f"대화 파일 읽기 완료: {len(audio_data)} bytes")
+        
+        # 2. AI 서버에 전송
+        files = {
+            "file": ("audio.wav", audio_data, "audio/wav")
+        }
+        data = {
+            "taskId": task_id,
+            "analysisRequest": json.dumps(analysis_request, ensure_ascii=False)
+        }
+        
+        ai_url = settings.AI_BASE_URL  # 실제 AI 서버
+        
+        logger.info(f"대화 AI 서버 요청 시작: {ai_url}/conversation, taskId={task_id}")
+        
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            response = await client.post(
+                f"{ai_url}/conversation",
+                files=files,
+                data=data
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            logger.info(f"대화 AI 서버 요청 완료: {file_path}")
+            return result
+
+    except FileNotFoundError as e:
+        logger.error(f"대화 파일 없음: {file_path}")
+        raise
+    except httpx.TimeoutException:
+        logger.error(f"대화 AI 서버 타임아웃: {file_path}")
+        raise Exception("대화 AI 서버 응답 타임아웃")
+    except httpx.HTTPStatusError as e:
+        logger.error(f"대화 AI 서버 HTTP 에러: {file_path}, status: {e.response.status_code}")
+        raise Exception(f"대화 AI 서버 에러: {e.response.status_code}")
+    except Exception as e:
+        logger.error(f"대화 AI 서버 통신 실패: {file_path}, error: {e}")
         raise
