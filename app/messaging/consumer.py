@@ -68,14 +68,13 @@ class AudioJobConsumer:
             task_id = message_dict.get("taskId") or message_dict.get("task_id")
             message = AudioJobMessage(**message_dict)
             file_path = message.filePath
-            analysis_type = message.type # 추가된 부분
             logger.info(f"메시지 수신: {file_path}")
             
             # 2. 백그라운드 스레드에서 처리 시작
             if self.process_callback:
                 threading.Thread(
                     target=self._process_in_thread,
-                    args=(file_path, message.taskId, analysis_type, message.analysisRequest),
+                    args=(file_path, message.taskId, message.analysisRequest),
                     daemon=True
                 ).start()
             else:
@@ -100,14 +99,14 @@ class AudioJobConsumer:
             if task_id:
                 self._publish_parse_error(task_id, str(e))
     
-    def _process_in_thread(self, file_path: str, task_id: str, analysis_type: str, analysis_request: dict):
+    def _process_in_thread(self, file_path: str, task_id: str, analysis_request: dict):
         """
         스레드에서 실행되는 비동기 처리
         """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            loop.run_until_complete(self.process_callback(file_path, task_id, analysis_type, analysis_request))
+            loop.run_until_complete(self.process_callback(file_path, task_id, analysis_request))
         finally:
             loop.close()
     
@@ -198,14 +197,13 @@ class ConversationJobConsumer:
             task_id = message_dict.get("taskId") or message_dict.get("task_id")
             message = AudioJobMessage(**message_dict)
             file_path = message.filePath
-            analysis_type = message.type
             logger.info(f"메시지 수신: {file_path}")
             
             # 2. 백그라운드 스레드에서 처리 시작
             if self.process_callback:
                 threading.Thread(
                     target=self._process_in_thread,
-                    args=(file_path, message.taskId, analysis_type, message.analysisRequest),
+                    args=(file_path, message.taskId, message.analysisRequest),
                     daemon=True
                 ).start()
             else:
@@ -230,15 +228,15 @@ class ConversationJobConsumer:
             if task_id:
                 self._publish_parse_error(task_id, str(e))
     
-    def _process_in_thread(self, file_path: str, task_id: str, analysis_type: str, analysis_request: dict):
+    def _process_in_thread(self, file_path: str, task_id: str, analysis_request: dict):
         """
         스레드에서 실행되는 비동기 처리
         """
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            loop.run_until_complete(self.process_callback(file_path, task_id, analysis_type, analysis_request))
-        finally:
+            loop.run_until_complete(self.process_callback(file_path, task_id, analysis_request))
+        finally:    
             loop.close()
     
     def _publish_parse_error(self, task_id: str, error_msg: str):
