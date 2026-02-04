@@ -46,7 +46,8 @@ class AudioResultProducer:
             "pron": settings.RABBITMQ_PRON_QUEUE,
             "inton": settings.RABBITMQ_INTON_QUEUE,
             "llm": settings.RABBITMQ_LLM_QUEUE,
-            "error": settings.RABBITMQ_ERROR_QUEUE
+            "error": settings.RABBITMQ_ERROR_QUEUE,
+            "conversation": settings.RABBITMQ_CONVERSATION_QUEUE
         }
         
         queue_name = queue_map.get(result_type, f"{result_type}_result")
@@ -79,6 +80,10 @@ class AudioResultProducer:
 
     def close(self):
         """연결 종료"""
-        if self._connected:
-            self.rabbitmq.close()
-            self._connected = False
+        try:
+            if self._connected and self.rabbitmq:
+                self.rabbitmq.close()
+                self._connected = False
+                logger.info("Producer closed successfully")
+        except Exception as e:
+            logger.error(f"Failed to close producer: {e}")

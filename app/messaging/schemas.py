@@ -10,8 +10,8 @@ class AudioJobMessage(BaseModel):
     """
     taskId: str = Field(..., alias="task_id")
     filePath: str = Field(..., alias="file_path")
-    analysisRequest: Dict[str, Any] = Field(..., alias="analysis_request")
 
+    analysisRequest: Dict[str, Any] = Field(..., alias="analysis_request")
     class Config:
         populate_by_name = True  # camelCase/snake_case 모두 허용
 

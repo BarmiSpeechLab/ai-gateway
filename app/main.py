@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from app.api.v1.routes import router as v1_router
-from app.messaging.consumer import AudioJobConsumer
+from app.messaging.consumer import AudioJobConsumer, ConversationJobConsumer
 from app.messaging.producer import AudioResultProducer
 from app.api.v1.clients import ai_client
 from app.services.file_service import FileService
@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 
 consumer: AudioJobConsumer = None
 consumer_thread: threading.Thread = None
+
+conversation_consumer: ConversationJobConsumer = None
+conversation_consumer_thread: threading.Thread = None
+
 producer: AudioResultProducer = None
 file_service: FileService = None
 
@@ -72,11 +76,61 @@ async def process_audio_job(file_path: str, task_id: str, analysis_request: dict
         except Exception as pub_error:
             logger.error(f"에러 메시지 발행 실패: {pub_error}")
 
+# 회화 기능
+async def process_conversation_job(file_path: str, task_id: str, analysis_request: dict):
+    """
+    대화 파일 처리 orchestration 함수
+    
+    Args:
+        file_path: 처리할 파일 경로
+        task_id: 작업 ID
+        analysis_request: 분석 요청 데이터
+    """
+    try:
+        logger.info(f"파일 처리 시작: {file_path}")
+        
+        # 1. AI 서버로 분석 요청 및 결과 수신
+        result = await ai_client.conversation_audio(file_path, task_id, analysis_request)
+        if result:
+            producer.publish(
+                result_type="conversation",
+                data=result
+            )
+        else:
+            logger.warning(f"결과 타입 누락: {result}")
+        # 3. 파일 삭제
+        deleted = file_service.delete_file(file_path)
+        if deleted:
+            logger.info(f"파일 삭제 완료: {file_path}")
+        else:
+            logger.warning(f"파일 삭제 실패: {file_path}")
+        
+        logger.info(f"파일 처리 완료: {file_path}")
+        
+    except Exception as e:
+        logger.error(f"파일 처리 실패: {file_path}, error: {e}")
+        
+        # error 큐로 FAIL 메시지 발행
+        error_message = {
+            "taskId": task_id,
+            "status": "FAIL",
+            "error": str(e),
+            "analysisResult": None
+        }
+        
+        try:
+            producer.publish(
+                result_type="error",
+                data=error_message
+            )
+        except Exception as pub_error:
+            logger.error(f"에러 메시지 발행 실패: {pub_error}")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI 앱 생명주기 관리 - startup/shutdown 이벤트"""
-    global consumer, consumer_thread, producer, file_service
+    global consumer, consumer_thread, producer, file_service, conversation_consumer, conversation_consumer_thread
     
     # Startup
     logger.info("FastAPI application starting...")
@@ -91,6 +145,13 @@ async def lifespan(app: FastAPI):
         consumer_thread = threading.Thread(target=consumer.start, daemon=True)
         consumer_thread.start()
         logger.info("RabbitMQ consumer thread started")
+
+        # === 아래 추가 ===
+        conversation_consumer = ConversationJobConsumer(process_callback=process_conversation_job)
+        conversation_consumer_thread = threading.Thread(target=conversation_consumer.start, daemon=True)
+        conversation_consumer_thread.start()
+        logger.info("RabbitMQ conversation consumer thread started")
+
     except Exception as e:
         logger.error(f"Failed to start consumer: {e}")
     
@@ -105,7 +166,12 @@ async def lifespan(app: FastAPI):
             logger.info("Consumer stopped successfully")
         except Exception as e:
             logger.error(f"Failed to stop consumer: {e}")
-    
+    if conversation_consumer:
+        try:
+            conversation_consumer.stop()
+            logger.info("Conversation consumer stopped successfully")
+        except Exception as e:
+            logger.error(f"Failed to stop conversation consumer: {e}")
     if producer:
         try:
             producer.close()

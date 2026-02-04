@@ -30,7 +30,11 @@ class FileService:
             IOError: 파일 읽기 실패 시
         """
         path = Path(file_path)
-        
+
+        if not path.is_absolute(): # 절대 경로가 아니면 /shared/audio 기준으로 처리
+            path = Path("/shared/audio") / path
+            file_path = str(path)
+
         if not path.exists():
             logger.error(f"파일을 찾을 수 없음: {file_path}")
             raise FileNotFoundError(f"파일이 존재하지 않습니다: {file_path}")
