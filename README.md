@@ -1,6 +1,15 @@
-# ai-gateway
+### FastAPI 레포지토리입니다.
 
-FastAPI 기반 음성 분석 게이트웨이 서버 - RabbitMQ를 통한 비동기 음성 파일 처리
+
+> 해당 레포지토리는 AI 실행 환경과 서비스 백엔드를 분리하는 구조로 설계되었습니다. **AI Gateway** 는 서비스 백엔드와 AI 분석 서버 사이에서 AI 기능에 대한 단일 진입점 역할을 수행합니다.
+
+![alt text](.github/image.png)
+>>>  자세한 내용은 기술 개발 문서 *FastAPI AI 서버 통신 설계*를 참고해주세요
+
+## 🔗 기술 개발 문서
+- [FastAPI란 무엇인가요?](https://www.notion.so/FastAPI-2f4fc74069a6806fa07bc9ffe2408998?source=copy_link)
+- [FastAPI AI 서버 통신 설계](https://www.notion.so/FastAPI-AI-2eefc74069a68097a84aff96aeaf7eaa?source=copy_link)
+
 
 ## 📁 디렉토리 구조
 
