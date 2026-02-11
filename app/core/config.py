@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     RABBITMQ_USER: str  # .env
     RABBITMQ_PASS: str  # .env
     RABBITMQ_VHOST: str = "/barmi"
+    RABBITMQ_HEARTBEAT_SEC: int = 30
+    RABBITMQ_BLOCKED_CONNECTION_TIMEOUT_SEC: int = 60
+    RABBITMQ_CONNECTION_ATTEMPTS: int = 5
+    RABBITMQ_RETRY_DELAY_SEC: int = 3
+    RABBITMQ_SOCKET_TIMEOUT_SEC: int = 10
+    RABBITMQ_RECONNECT_INITIAL_DELAY_SEC: int = 1
+    RABBITMQ_RECONNECT_MAX_DELAY_SEC: int = 30
     RABBITMQ_JOB_QUEUE: str = "ai.jobs"  # Consumer가 수신하는 큐
     RABBITMQ_CONVERSATION_JOB_QUEUE: str = "conversation.jobs"  # 대화 큐
     
